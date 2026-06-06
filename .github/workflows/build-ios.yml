@@ -1,0 +1,68 @@
+# .github/workflows/build-ios.yml
+#
+# Builds an UNSIGNED iOS .ipa from an Expo project on a free GitHub-hosted
+# macOS runner. The output is meant to be sideloaded onto a device with
+# SideStore / Sideloadly using a free Apple ID, so signing is disabled here.
+
+name: Build unsigned iOS IPA
+
+# NOTE: the trigger key below is quoted as "on" ON PURPOSE.
+# In YAML the bare word `on` is parsed as the boolean `true`, which makes
+# GitHub report: "No event triggers defined in `on`". Quoting keeps it a string.
+"on":
+  workflow_dispatch: # run it manually from the repo's Actions tab
+
+jobs:
+  build-ios:
+    runs-on: macos-15 # macOS is the only runner with Xcode (SDK 54 needs Xcode 16.1+)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Expo SDK 54 needs Node 20.19.x or newer
+          cache: npm # change to 'yarn'/'pnpm' if you use those
+
+      - name: Install JS dependencies
+        run: npm ci # use 'yarn install --frozen-lockfile' etc. if not npm
+
+      - name: Generate the native iOS project
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Build an unsigned archive
+        run: |
+          set -euo pipefail
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -n 1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Using workspace: $WORKSPACE"
+          echo "Using scheme:    $SCHEME"
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/app.xcarchive" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            clean archive
+
+      - name: Package the .app into an unsigned .ipa
+        run: |
+          set -euo pipefail
+          APP_PATH=$(ls -d "$RUNNER_TEMP"/app.xcarchive/Products/Applications/*.app | head -n 1)
+          echo "Packaging: $APP_PATH"
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/Payload/"
+          ( cd "$RUNNER_TEMP" && zip -qr app-unsigned.ipa Payload )
+          ls -lh "$RUNNER_TEMP/app-unsigned.ipa"
+
+      - name: Upload the IPA as a downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-unsigned-ipa
+          path: ${{ runner.temp }}/app-unsigned.ipa
+          if-no-files-found: error

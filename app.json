@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "What-The-Food",
-    "slug": "What-The-Food",
+    "slug": "what-the-food",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -43,6 +43,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e1391024-50b9-45a1-9e8d-d972568770d0"
+      }
+    },
+    "owner": "jagermeist"
   }
 }
