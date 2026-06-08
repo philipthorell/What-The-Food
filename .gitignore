@@ -1,10 +1,10 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
-node_modules/
+mobile/node_modules/
 
 # Expo
-.expo/
+mobile/.expo/
 dist/
 web-build/
 expo-env.d.ts
@@ -39,10 +39,14 @@ yarn-error.*
 app-example
 
 # generated native folders
-/ios
-/android
+mobile/ios
+mobile/android
 
 .vscode
 .idea
 
-uv.lock
+ml/uv.lock
+ml/data
+ml/checkpoints
+ml/.venv
+**/__pycache__
