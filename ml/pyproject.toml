@@ -1,7 +1,7 @@
 [project]
 name = "ml"
 version = "0.1.0"
-description = "IOS app that can tell you what food item you have in front of you"
+description = "IOS app that can classify food"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
